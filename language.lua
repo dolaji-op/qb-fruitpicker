@@ -1,0 +1,21 @@
+Language = {
+    ['shop'] = 'Fruit Market',
+    ['sell_header'] = 'Sell Oranges',
+    ['sell'] = 'Sell',
+    ['amount'] = 'Amount',
+    ['buy_stuff'] = "Buy Items",
+    ['sell_fruit'] = "Sell Fruits",
+    ['pluck_orange'] = "Pluck Orange",
+    ['pickup_fruit'] = "Pickup Orange",
+    ['pick_prog'] = "Picking oranges",
+    ['pickup_success'] = "You found one fruit from the orchard!",
+    ['no_more'] = "You can not pickup more fruits form this orchard!",
+    ['sucess'] = "Sucess",
+    ['no_basket'] = "You don't have basket on your hand!",
+    ['no_fruit'] = "You Don't have fruits in this basket!",
+    ['basket_full'] = "You can not put more fruits in this basket!",
+    ['not_own'] = "This basket belongs to someone else!",
+    ['no_job'] = "You don't have job!",
+    ['submit'] = "Submit",
+} 
+
