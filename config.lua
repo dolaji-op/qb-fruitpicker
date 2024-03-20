@@ -19,9 +19,12 @@ Config.Object = {
 
 Config.UseXp = false ---- enabe/disable xp system here
 Config.PedModel = 'a_m_m_farmer_01'
-Config.UseDrawText = true ---- set to false if you want to use eye target.
+Config.UseDrawText = false ---- set to false if you want to use eye target.
 Config.RequireJob = false --- enable this if you want to use job only.
-Config.JobName = "traindriver" --- job name Note: make sure you add job in your server accordingly your framework.
+Config.JobName = "fruitpicker" --- job name Note: make sure you add job in your server accordingly your framework.
+Config.EyeTarget = "ox_target"  --- you can use ox_target or qb-target
+Config.Input = "ox-lib" --- ("ox-lib", "qb-input") input script will be used for menus (uncomment line in fxmanifest.lua if you using ox-lib)
+
 
 Config.MinPay = 200 -- min payment on per orange sell.
 Config.MaxPay = 500 -- max payment on per orange sell.
@@ -85,86 +88,157 @@ Config.ShopItems = { -- Food Shop
 }
 
 InsertValue = function(title, text, name)
-	local dialog = exports['qb-input']:ShowInput({
-        header = title,
-        submitText = Language['submit'],
-        inputs = {
-            {
-                text = text, -- text you want to be displayed as a place holder
-                name = "f", -- name of the input should be unique otherwise it might override
-                type = "number", -- type of the input
-                isRequired = true -- Optional [accepted values: true | false] but will not submit the form if no value is inputted
-            },
-        },
-    })
+    if Config.Input == 'ox-lib' then
+		local dialog = lib.inputDialog(title, {
+			{type = 'number', label = "How Much?", required = true, min = 1},
+		})
+		if not dialog then return end
+		if tonumber(dialog[1]) > 0 then
+			return tonumber(dialog[1])
+		end
 
-    if dialog ~= nil then
-        for k,v in pairs(dialog) do
-            return v
+	else
+		local dialog = exports['qb-input']:ShowInput({
+            header = title,
+            submitText = Language['submit'],
+            inputs = {
+                {
+                    text = text, -- text you want to be displayed as a place holder
+                    name = "f", -- name of the input should be unique otherwise it might override
+                    type = "number", -- type of the input
+                    isRequired = true -- Optional [accepted values: true | false] but will not submit the form if no value is inputted
+                },
+            },
+        })
+
+        if dialog ~= nil then
+            for k,v in pairs(dialog) do
+                return v
+            end
         end
-    end
+	end
 end
 
 
 AddTargets = function(targettype, v)
-    if targettype == 'fruittree' then
-        exports['qb-target']:AddCircleZone(v.name, v.coords, 0.50, {
-			name = v.name,
-			debugPoly = false,
-		}, {
-			options = {
-                {
-                    type = "client",
-                    targeticon = 'fas fa-eye',
-                    event = "ds-fruitpicker:stealorange",
-                    icon = "fas fa-eye",
-                    label = "Pluck Orange",
-                    coords = v.coords,
+    if Config.EyeTarget == 'qb-target' then
+        if targettype == 'fruittree' then
+            exports['qb-target']:AddCircleZone(v.name, v.coords, 0.50, {
+                name = v.name,
+                debugPoly = false,
+            }, {
+                options = {
+                    {
+                        type = "client",
+                        targeticon = 'fas fa-eye',
+                        event = "ds-fruitpicker:stealorange",
+                        icon = "fas fa-eye",
+                        label = "Pluck Orange",
+                        coords = v.coords,
+                    },
                 },
-            },
-			distance = 1.5,
-		})
-    elseif targettype == "orange" then
-        local props = {
-            `orange`,
-            `prop_fruit_basket`
-        }
-        exports['qb-target']:AddTargetModel(props, {
-            options = {
-                {
-                    type = "client",
-                    targeticon = 'fas fa-eye', -- This is the icon of the target itself, the icon changes to this when it turns blue on this specific option, this is OPTIONAL
-                    event = "ds-fruitpicker:pickupfruit",
-                    icon = "fas fa-eye",
-                    label = "Pickup Fruit",
+                distance = 1.5,
+            })
+        elseif targettype == "orange" then
+            local props = {
+                `orange`,
+                `prop_fruit_basket`
+            }
+            exports['qb-target']:AddTargetModel(props, {
+                options = {
+                    {
+                        type = "client",
+                        targeticon = 'fas fa-eye', -- This is the icon of the target itself, the icon changes to this when it turns blue on this specific option, this is OPTIONAL
+                        event = "ds-fruitpicker:pickupfruit",
+                        icon = "fas fa-eye",
+                        label = "Pickup Fruit",
+                    },
                 },
-            },
-            distance = 2.5,
-        })
-    elseif targettype == 'store' then
-        exports['qb-target']:AddBoxZone('store', v.coords, 0.70, 0.70, {
-            name = 'store',
-            heading = v.heading,
-            debugPoly = false,
-            minZ = v.coords.z-0.9,
-            maxZ = v.coords.z+0.9,
-        }, {
-            options = {
-                {
-                    type = 'client',
-                    event = 'ds-fruitpicker:buystuff',
-                    icon = "fas fa-eye",
-                    label = "Buy Items",
+                distance = 2.5,
+            })
+        elseif targettype == 'store' then
+            exports['qb-target']:AddBoxZone('store', v.coords, 0.70, 0.70, {
+                name = 'store',
+                heading = v.heading,
+                debugPoly = false,
+                minZ = v.coords.z-0.9,
+                maxZ = v.coords.z+0.9,
+            }, {
+                options = {
+                    {
+                        type = 'client',
+                        event = 'ds-fruitpicker:buystuff',
+                        icon = "fas fa-eye",
+                        label = "Buy Items",
+                    },
+                    {
+                        type = 'client',
+                        event = 'ds-fruitpicker:sellorange',
+                        icon = "fas fa-eye",
+                        label = "Sell Fruits",
+                    },
                 },
-                {
-                    type = 'client',
-                    event = 'ds-fruitpicker:sellorange',
-                    icon = "fas fa-eye",
-                    label = "Sell Fruits",
-                },
-            },
-            distance = 2.5
-        })
+                distance = 2.5
+            })
+        end
+    elseif Config.EyeTarget == 'ox_target' then
+        if targettype == 'fruittree' then
+            exports.ox_target:addSphereZone({
+                coords = v.coords,
+                radius =  0.50,
+                debug = false,
+                options = {
+                    {
+                        name = v.name,
+                        icon = "fas fa-eye",
+						label = "Pluck Orange",
+                        items =  false,
+                        distance = 2,
+                        event = "ds-fruitpicker:stealorange",
+                        coords = v.coords,
+                    }
+                }
+            })
+        elseif targettype == "orange" then
+            local props = {
+                `orange`,
+                `prop_fruit_basket`
+            }
+            local options = {
+                label = "Pickup Fruit",
+                name = "Pickup Fruit",
+                icon = "fas fa-eye",
+                distance = 2.5,
+                event = "ds-fruitpicker:pickupfruit",
+            }
+            exports.ox_target:addModel(props, options)
+
+        elseif targettype == 'store' then
+            exports.ox_target:addBoxZone({
+                coords = v.coords,
+                size = vec3(0.70, 0.70, 2),
+                rotation = v.heading,
+                debug = false,
+                options = {
+                    {
+                        name = "Buy Items",
+                        event = 'ds-fruitpicker:buystuff',
+                        distance = 2,
+                        items =  false,
+                        icon = "fas fa-eye",
+                        label = "Buy Items",
+                    },
+                    {
+                        name = "Sell Fruits",
+                        event = 'ds-fruitpicker:sellorange',
+                        items =  false,
+                        distance = 2,
+                        icon = "fas fa-eye",
+                        label = "Sell Fruits",
+                    },
+                }
+            })
+        end
     end
 end
 
