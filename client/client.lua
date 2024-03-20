@@ -206,6 +206,69 @@ function CheckJob()
 	return check
 end
 
+RegisterCommand('fpk', function()
+	QBCore.Functions.TriggerCallback('ds-fruitpicker:server:getdata', function(data)
+		JobData = data
+	end)
+	if not Config.UseDrawText then
+		AddTargets('orange')
+		AddTargets('store',  Config.Blip['selling'])
+	end
+
+	if Config.UseXp then
+		local PlayerData = QBCore.Functions.GetPlayerData()
+		local jobnrep = PlayerData.metadata["jobrep"]
+		local taskadded = 0
+		if jobnrep['fruitpeeker'] ~= nil then
+			for k,v in pairs(Config.Xp) do
+				if jobnrep['fruitpeeker'] <= v.xp then
+					for a,b in pairs(Config.Orange) do
+						if taskadded < v.enabletree then
+							local data = {
+								coords = b,
+								name = 'orange'..a
+							}
+							if Config.UseDrawText then
+								drawtextData[a] = data
+							else
+								AddTargets('fruittree', data)
+							end
+							taskadded = taskadded + 1
+						end
+					end
+				end
+				break
+			end
+		else
+			for a,b in pairs(Config.Orange) do
+				if taskadded < 10 then
+					local data = {
+						coords = b,
+						name = 'orange'..a
+					}
+					if Config.UseDrawText then
+						drawtextData[a] = data
+					else
+						AddTargets('fruittree', data)
+					end
+					taskadded = taskadded + 1
+				end
+			end
+		end
+	else
+		for k,v in pairs(Config.Orange) do
+			local data = {
+				coords = v,
+				name = 'orange'..k
+			}
+			if Config.UseDrawText then
+				drawtextData[k] = data
+			else
+				AddTargets('fruittree', data)
+			end
+		end
+	end
+end)
 
 
 RegisterNetEvent("QBCore:Client:OnPlayerLoaded")
@@ -274,12 +337,30 @@ AddEventHandler("QBCore:Client:OnPlayerLoaded", function()
 end)
 
 
+function GetID(num)
+    if num == math.floor(num) then
+        return math.floor(num / (10 ^ (math.floor(math.log10(num)) - 3)))
+    else
+        local wholePart = math.floor(num)
+        local digitsInWhole = wholePart > 0 and math.floor(math.log10(wholePart)) + 1 or 1
+        if digitsInWhole >= 3 then
+            return math.floor(num * 10) / 10
+        else
+            local factor = 10 ^ (4 - digitsInWhole)
+            return math.floor(num * factor) / factor
+        end
+    end
+end
+
+
+
+
 RegisterNetEvent('ds-fruitpicker:stealorange')
 AddEventHandler('ds-fruitpicker:stealorange', function(data)
 	if CheckJob() then
 		if currentbasket ~= nil and basket ~= nil then
-			if not JobData[data.coords.x+data.coords.y] then
-				TriggerServerEvent('ds-fruitpicker:addorg', data.coords.x+data.coords.y)
+			if not JobData[GetID(data.coords.x)] then
+				TriggerServerEvent('ds-fruitpicker:addorg', GetID(data.coords.x))
 				local ped = PlayerPedId()
 				local treecoords = data.coords
 				TaskTurnPedToFaceCoord(ped, treecoords.x,treecoords.y,treecoords.z,1000)
@@ -306,7 +387,7 @@ AddEventHandler('ds-fruitpicker:stealorange', function(data)
 					ClearPedTasks(GetPlayerPed(-1))
 					AttachBasket(ped)
 					QBCore.Functions.Notify(Language['pickup_success'], "success")
-					Addbasketfruit(currentbasket.info.qty + 1, data.coords.x+data.coords.y)
+					Addbasketfruit(currentbasket.info.qty + 1, GetID(data.coords.x))
 				end, function() -- Cancel
 					ClearPedTasks(GetPlayerPed(-1))
 					loadAnimDict('pickup_object')
@@ -315,7 +396,7 @@ AddEventHandler('ds-fruitpicker:stealorange', function(data)
 					ClearPedTasks(GetPlayerPed(-1))
 					AttachBasket(ped)
 					QBCore.Functions.Notify("Canceled..", "error")
-					TriggerServerEvent('ds-fruitpicker:removeorg', data.coords.x+data.coords.y)
+					TriggerServerEvent('ds-fruitpicker:removeorg', GetID(data.coords.x))
 				end)
 			else
 				QBCore.Functions.Notify(Language['no_more'], "error")
