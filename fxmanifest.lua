@@ -3,7 +3,7 @@ game 'gta5'
 
 
 description 'ds-fruitpicker'
-version '1.0.0'
+version '3.5'
 
 
 shared_scripts {
@@ -12,6 +12,7 @@ shared_scripts {
 }
 
 client_scripts {
+    '@ox_lib/init.lua',
     'client/client.lua',
 }
 
